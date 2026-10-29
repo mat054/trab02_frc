@@ -1,0 +1,11 @@
+lab.env
+*.tmp
+*.swp
+.DS_Store
+
+# logs e capturas brutas ficam fora do Git, exceto as evidências selecionadas
+*.log
+*.pcap
+!docs/evidencias/**
+
+entrega/*.zip
