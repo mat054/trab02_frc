@@ -20,9 +20,21 @@
 | R07 | Reserva DHCP para máquina específica | Mesmo MAC recebe o mesmo IP após renovação |
 | R08 | Registros de concessões DHCP | Arquivo de *leases* e logs mostram os eventos relevantes |
 | R09 | DNAT TCP 80 (WAN) → 8080 (LAN) | Cliente na WAN conecta à porta 80 do roteador e alcança servidor TCP 8080 na LAN |
-| R10 | Procedimentos reproduzíveis e ZIP | Instalação, validação, limitações e evidências são documentadas; demonstração presencial preparada |
+| R10 | Procedimentos reproduzíveis e ZIP | Instalação, validação, limitações e evidências são documentadas; arquivos de configuração passam na verificação de sintaxe; demonstração presencial preparada |
 
-**Pesos informados no enunciado:** documentação 30%, validação presencial 70%. Limites de escore indicados: *BSD 100%, Linux 90%, outros 70%. Confirmar com o professor que FreeBSD virtualizado é aceito e qual equipamento será usado na avaliação.
+**Pesos informados no enunciado:** documentação 30%, validação presencial 70%. Limites de escore indicados: *BSD 100%, Linux 90%, outros 70%. Derivações de *BSD ou Linux com pacotes para configuração rápida de gateway (por exemplo, distribuições de firewall/roteador prontas) entram em "outros" (70%); configurar PF, dnsmasq e roteamento manualmente em FreeBSD puro evita esse enquadramento. Confirmar com o professor que FreeBSD virtualizado é aceito e qual equipamento será usado na avaliação.
+
+### Requisitos de entrega e avaliação (enunciado)
+
+| Item do enunciado | Como o projeto atende |
+|---|---|
+| Submissão no ponto de coleta do **Sigaa ou Office365**; um pacote **ZIP** por grupo, com a documentação | `entrega/checklist.md` registra o canal confirmado e a montagem do ZIP |
+| **Documentação mínima do script/roteiro de configuração (30%)**, com cinco tópicos: (a) SO usado, (b) aplicações demandadas na LAN, (c) como implementar a LAN, (d) como validar a configuração, (e) limitações conhecidas | (a) `README.md`; (b) `docs/arquitetura.md`; (c) `docs/instalacao.md` e `scripts/`; (d) `docs/validacao.md` e `tests/`; (e) `docs/limitacoes.md` |
+| **Lista de testes necessários**: validar conectividade, tradução de endereço (NAT) e isolamento de segmento (NAT) | `tests/01` a `tests/03` e tabela da Fase 3, consolidadas em `docs/validacao.md` |
+| **Arquivos de configuração com erro de interpretação são anulados** | Validar sintaxe antes de entregar (`pfctl -nf`, `dnsmasq --test`, `sh -n`) e incluir no ZIP, além dos templates, cópias renderizadas sem marcadores de substituição |
+| **Testes de validação executados na presença do professor (70%)** | Ensaio completo na Fase 4; demonstração de NAT, DHCP e DNAT |
+| **Validação da documentação no LDS**, "em momento oportuno" | Documentação reproduzível por quem não participou do projeto; confirmar data e ambiente com o professor |
+| Trabalho em **dupla**; cópia ou plágio provocam anulação de todos os artefatos (em recorrência) | Autoria própria; citar as referências usadas |
 
 ## 2. Arquitetura planejada
 
@@ -64,13 +76,15 @@ Host separado na WAN testa conexão em 192.168.X.Y:80.
 | `DNS_IP` | `192.168.X.1` | Alternativas do enunciado: `164.41.101.4` e `164.41.101.11` |
 | `DNAT_WAN_PORT` / `DNAT_LAN_PORT` | `80` / `8080` | Valores obrigatórios |
 
-**Nota de infraestrutura:** no UTM, a WAN de laboratório não aparece automaticamente: uma WAN *Shared Network* do UTM pode ter outra faixa IP. Para a validação com `192.168.X.0/24`, será preciso ajustar a ligação à rede física (bridge/adaptador, conforme suporte e autorização) ou utilizar o ambiente indicado pelo professor. Nunca executar DHCP na rede WAN do laboratório: vincular o serviço exclusivamente à LAN.
+**Faixa da LAN:** o enunciado pede uma sub-rede `/16` dentro das faixas reservadas para uso privado (RFC 1918: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`). Evitar `192.168.0.0/16`, que contém a WAN `192.168.X.0/24` e geraria sobreposição de rotas.
+
+**Nota de infraestrutura:** no UTM, a WAN de laboratório não aparece automaticamente: uma WAN *Shared Network* do UTM pode ter outra faixa IP. Para a validação com `192.168.X.0/24`, será preciso ajustar a ligação à rede física (bridge/adaptador, conforme suporte e autorização; o enunciado descreve a rede de acesso como cabeada, então confirmar se a ponte do UTM funciona com a interface disponível, o que pode exigir um adaptador Ethernet) ou utilizar o ambiente indicado pelo professor. Nunca executar DHCP na rede WAN do laboratório: vincular o serviço exclusivamente à LAN.
 
 ## 3. Escolhas técnicas
 
 - **SO:** FreeBSD, versão e arquitetura registradas no README.
 - **Firewall/NAT/DNAT:** PF, com regras em `config/pf.conf.template` e verificação por `pfctl -nf` antes de aplicar. A política de isolamento será explícita, pois NAT por si só não substitui firewall.
-- **DHCP:** dnsmasq, com `config/dnsmasq.conf.template`, escuta restrita à LAN, reserva por MAC, *leases* e `log-dhcp`. Registrar o caminho efetivo do arquivo de *leases* e dos logs. Pode-se definir `dhcp-leasefile` explicitamente para evitar ambiguidade.
+- **DHCP:** dnsmasq, com `config/dnsmasq.conf.template`, escuta restrita à LAN, reserva por MAC, *leases* e `log-dhcp`; o DNS entregue aos clientes deve ser `DNS_IP` (opção DHCP 6), pois por padrão o dnsmasq anuncia o próprio endereço como DNS quando seu serviço de DNS está ativo (avaliar `port=0`). Registrar o caminho efetivo do arquivo de *leases* e dos logs. Pode-se definir `dhcp-leasefile` explicitamente para evitar ambiguidade.
 - **Automação:** scripts POSIX `sh`, compatíveis com FreeBSD, com parâmetros em `config/lab.env` criado a partir do exemplo; scripts devem validar privilégios, interfaces e variáveis antes de modificar o sistema.
 - **Versionamento:** Git, pequenas branches de funcionalidade, revisões cruzadas e nenhum segredo/IP real sensível commitado por acidente.
 - **Cliente de testes:** outra VM na LAN; uma terceira máquina/VM no lado WAN para testar o DNAT externamente.
@@ -110,7 +124,8 @@ trabalho-02-redes/
 │   └── evidencias/
 │       └── .gitkeep                    # Saídas, logs recortados, imagens ou pcaps
 └── entrega/
-    └── checklist.md                   # Arquivos obrigatórios e montagem do ZIP
+    ├── checklist.md                   # Arquivos obrigatórios e montagem do ZIP
+    └── config-renderizada/            # pf.conf e dnsmasq.conf finais, gerados pelos scripts, para conferir sintaxe
 ```
 
 **Local da configuração ativa no FreeBSD:** scripts copiam/geram arquivos finais, conforme o sistema instalado, em `/etc/pf.conf` (PF) e `/usr/local/etc/dnsmasq.conf` (dnsmasq); o Git armazena as **templates**, e não pretende que o sistema execute arquivos diretamente do repositório. Os scripts devem preservar backup dos arquivos substituídos.
@@ -119,7 +134,7 @@ trabalho-02-redes/
 
 ### Fase 0 — Acordo e ambiente (conjunta)
 
-1. Ler o enunciado e confirmar com o professor critérios de VM, laboratório, acesso WAN e forma de demonstração.
+1. Ler o enunciado e confirmar com o professor critérios de VM, laboratório, acesso WAN e forma de demonstração, além do valor de `X`, do DNS a usar, do canal de submissão (Sigaa ou Office365) e de quando e onde a documentação será validada (LDS).
 2. Criar o repositório Git e o `lab.env.example`; registrar FreeBSD e arquitetura.
 3. Criar VM FreeBSD roteadora com duas NICs; criar uma VM cliente na LAN e definir como testar a partir da WAN.
 4. Fixar contrato de IPs, interfaces, DHCP e portas antes do trabalho paralelo.
@@ -164,6 +179,7 @@ trabalho-02-redes/
 | Isolamento | Host WAN tentando alcançar LAN diretamente | Tentativa não autorizada falha; regra PF explica bloqueio |
 | DHCP | Cliente LAN + roteador | Configuração recebida, concessão e logs |
 | Reserva DHCP | Cliente com MAC conhecido | Mesmo IP após renovação |
+| DNS recebido | Cliente LAN | `nslookup`/`dig` resolve nomes usando o DNS entregue pelo DHCP, passando pelo NAT |
 | DNAT | Servidor na LAN em `:8080` e cliente externo na WAN | Conexão TCP bem-sucedida ao IP WAN em `:80` |
 | Reboot/reprodutibilidade | Roteador | Serviços voltam, configurações persistem |
 
@@ -174,8 +190,10 @@ No DNAT, usar `netcat`/`telnet`, conforme o enunciado. O tráfego de retorno do 
 1. Revisar README, arquitetura, instalação e limitações com os comandos realmente validados.
 2. Documentar cada teste: objetivo, ambiente, comando, resultado esperado, resultado observado e evidência.
 3. Fazer ensaio completo sem depender de comandos improvisados; se possível, repetir a configuração em VM limpa.
-4. Preparar ZIP contendo scripts, templates, documentação e evidências permitidas; excluir `.git`, credenciais e arquivos temporários.
-5. Confirmar que cada integrante sabe demonstrar NAT, DHCP e DNAT na presença do professor.
+4. Validar a sintaxe de todos os arquivos de configuração (`pfctl -nf`, `dnsmasq --test`, `sh -n`), pois arquivos com erro de interpretação são anulados, e gerar as cópias renderizadas em `entrega/config-renderizada/`.
+5. Preparar ZIP contendo scripts, templates, cópias renderizadas, documentação e evidências permitidas; excluir `.git`, credenciais e arquivos temporários; enviar no Sigaa ou Office365.
+6. Conferir que a documentação cobre os cinco tópicos mínimos do enunciado (SO, aplicações, implementação, validação e limitações) e que outra pessoa consegue reproduzi-la, pois será validada no LDS.
+7. Confirmar que cada integrante sabe demonstrar NAT, DHCP e DNAT na presença do professor.
 
 ## 6. Organização do trabalho paralelo
 
@@ -214,6 +232,10 @@ No DNAT, usar `netcat`/`telnet`, conforme o enunciado. O tráfego de retorno do 
 - **Política de rede:** não ligar o DHCP à rede institucional; não publicar serviço além do necessário; obter autorização antes de alterar portas/firewall em redes compartilhadas.
 - **Isolamento:** implementar política explícita de firewall; NAT sozinho não prova isolamento completo.
 - **Portabilidade:** scripts POSIX shell não tornam as configurações portáveis para Linux; `pf` e caminhos de serviços exigem FreeBSD.
+- **Configurações anuladas:** o enunciado desconsidera arquivos de configuração com erro de interpretação. Validar a sintaxe antes de cada ensaio e de cada entrega, e entregar também versões renderizadas, sem marcadores de substituição.
+- **Validação da documentação no LDS:** o enunciado prevê testes da documentação "em momento oportuno". Confirmar data e ambiente com o professor e escrever os passos de modo que alguém sem contexto consiga reproduzi-los.
+- **Submissão e autoria:** entregar o ZIP no Sigaa ou Office365. Cópia ou plágio anulam os artefatos, então manter o histórico Git e citar as referências usadas.
+- **Derivações de SO:** não usar distribuições prontas de firewall/roteador baseadas em *BSD ou Linux, que entram na categoria de 70%.
 
 ## 9. Checklist final de aceite
 
@@ -226,11 +248,17 @@ No DNAT, usar `netcat`/`telnet`, conforme o enunciado. O tráfego de retorno do 
 - [ ] DNAT WAN TCP 80 → LAN TCP 8080 demonstrado com `netcat`/`telnet` de outro host na WAN.
 - [ ] Serviços persistem após reiniciar a VM.
 - [ ] Scripts validados, seguros para repetição ou com limitações explicitadas; backups e reversão documentados.
-- [ ] Documentação cobre SO, aplicações, implantação, validação e limitações.
-- [ ] ZIP montado e ambos conseguem realizar a apresentação prática.
+- [ ] Documentação cobre SO, aplicações, implantação, validação e limitações, e inclui a lista de testes (conectividade, NAT e isolamento).
+- [ ] Todos os arquivos de configuração passam na verificação de sintaxe e o ZIP inclui as cópias renderizadas.
+- [ ] ZIP montado e enviado no Sigaa ou Office365, e ambos conseguem realizar a apresentação prática.
 
 ## Referências técnicas sugeridas
 
 - FreeBSD Handbook, **Firewalls / PF**: https://docs.freebsd.org/en/books/handbook/firewalls/
 - FreeBSD Handbook, **Advanced Networking**: https://docs.freebsd.org/en/books/handbook/advanced-networking/
 - Documentação do **dnsmasq**: https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html
+
+Referências teóricas indicadas no enunciado:
+
+- Wright, Gary R., and W. Richard Stevens. *TCP/IP Illustrated, Vol. 2*. Addison-Wesley Professional, 1995.
+- Lucas, Michael W. *Networking for System Administrators*. 2nd ed., Tilted Windmill Press, 2025.
