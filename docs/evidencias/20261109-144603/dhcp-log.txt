@@ -1,0 +1,46 @@
+$ tail -n 100 /var/log/dnsmasq.log
+Nov  9 14:28:54 dnsmasq[4127]: started, version 2.93 DNS disabled
+Nov  9 14:28:54 dnsmasq[4127]: compile time options: IPv6 GNU-getopt no-DBus no-UBus i18n IDN2 DHCP DHCPv6 no-Lua TFTP no-conntrack ipset no-nftset auth DNSSEC loop-detect inotify dumpfile
+Nov  9 14:28:54 dnsmasq-dhcp[4127]: DHCP, IP range 10.20.0.100 -- 10.20.0.200, lease time 12h
+Nov  9 14:44:23 dnsmasq[4127]: exiting on receipt of SIGTERM
+Nov  9 14:44:58 dnsmasq[2899]: started, version 2.93 DNS disabled
+Nov  9 14:44:58 dnsmasq[2899]: compile time options: IPv6 GNU-getopt no-DBus no-UBus i18n IDN2 DHCP DHCPv6 no-Lua TFTP no-conntrack ipset no-nftset auth DNSSEC loop-detect inotify dumpfile
+Nov  9 14:44:58 dnsmasq-dhcp[2899]: DHCP, IP range 10.20.0.100 -- 10.20.0.200, lease time 12h
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 available DHCP range: 10.20.0.100 -- 10.20.0.200
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 client provides name: cliente-reservado
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 DHCPDISCOVER(vtnet1) 52:54:00:4c:41:10 
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 tags: known, vtnet1
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 DHCPOFFER(vtnet1) 10.20.0.10 52:54:00:4c:41:10 
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 requested options: 1:netmask, 28:broadcast, 2:time-offset, 121:classless-static-route, 
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 requested options: 3:router, 15:domain-name, 6:dns-server, 12:hostname, 
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 requested options: 119:domain-search, 26:mtu
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 next server: 10.20.0.1
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  1 option: 53 message-type  2
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option: 54 server-identifier  10.20.0.1
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option: 51 lease-time  12h
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option: 58 T1  6h
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option: 59 T2  10h30m
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option:  1 netmask  255.255.0.0
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option: 28 broadcast  10.20.255.255
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size: 17 option: 12 hostname  cliente-reservado
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option:  6 dns-server  192.168.64.1
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option:  3 router  10.20.0.1
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 available DHCP range: 10.20.0.100 -- 10.20.0.200
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 client provides name: cliente-reservado
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 DHCPREQUEST(vtnet1) 10.20.0.10 52:54:00:4c:41:10 
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 tags: known, vtnet1
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 DHCPACK(vtnet1) 10.20.0.10 52:54:00:4c:41:10 cliente-reservado
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 requested options: 1:netmask, 28:broadcast, 2:time-offset, 121:classless-static-route, 
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 requested options: 3:router, 15:domain-name, 6:dns-server, 12:hostname, 
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 requested options: 119:domain-search, 26:mtu
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 next server: 10.20.0.1
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  1 option: 53 message-type  5
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option: 54 server-identifier  10.20.0.1
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option: 51 lease-time  12h
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option: 58 T1  6h
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option: 59 T2  10h30m
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option:  1 netmask  255.255.0.0
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option: 28 broadcast  10.20.255.255
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size: 17 option: 12 hostname  cliente-reservado
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option:  6 dns-server  192.168.64.1
+Nov  9 14:45:25 dnsmasq-dhcp[2899]: 2859743993 sent size:  4 option:  3 router  10.20.0.1

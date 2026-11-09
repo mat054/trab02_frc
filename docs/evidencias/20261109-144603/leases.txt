@@ -1,0 +1,2 @@
+$ cat /var/db/dnsmasq.leases
+1794289525 52:54:00:4c:41:10 10.20.0.10 cliente-reservado 01:52:54:00:4c:41:10

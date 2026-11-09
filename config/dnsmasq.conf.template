@@ -1,1 +1,26 @@
-# dnsmasq: pool, DNS, gateway, reserva, logs/leases
+# dnsmasq — somente DHCP na LAN. Renderizado por scripts/03-setup-dhcp.sh
+# para /usr/local/etc/dnsmasq.conf (os marcadores entre sublinhados duplos vêm de config/lab.env).
+
+# Desliga o DNS do dnsmasq: os clientes recebem DNS_IP via opção 6, não o roteador.
+port=0
+
+# Escuta só na LAN. bind-interfaces evita responder DHCP na rede do laboratório.
+interface=__LAN_IF__
+bind-interfaces
+no-dhcp-interface=__WAN_IF__
+
+# Pool dinâmico, máscara /16 e tempo de concessão
+dhcp-range=__DHCP_START__,__DHCP_END__,__LAN_NETMASK__,__DHCP_LEASE__
+
+# Gateway e DNS entregues aos clientes
+dhcp-option=option:router,__LAN_IP__
+dhcp-option=option:dns-server,__DNS_IP__
+
+# Reserva fixa: MAC do cliente que recebe o DNAT (fora do pool, dentro da LAN)
+dhcp-host=__RESERVED_MAC__,__RESERVED_IP__,__RESERVED_NAME__
+dhcp-authoritative
+
+# Leases e logs
+dhcp-leasefile=/var/db/dnsmasq.leases
+log-dhcp
+log-facility=/var/log/dnsmasq.log

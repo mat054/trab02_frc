@@ -1,0 +1,2 @@
+$ service dnsmasq status
+dnsmasq is running as pid 2899.

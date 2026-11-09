@@ -1,0 +1,9 @@
+$ sockstat -4 -l
+USER   COMMAND     PID FD PROTO LOCAL ADDRESS         FOREIGN ADDRESS      
+root   sshd       3059  7 tcp4  *:22                  *:*                  
+ntpd   ntpd       2988 21 udp4  *:123                 *:*                  
+ntpd   ntpd       2988 24 udp4  192.168.64.2:123      *:*                  
+ntpd   ntpd       2988 25 udp4  10.20.0.1:123         *:*                  
+ntpd   ntpd       2988 28 udp4  127.0.0.1:123         *:*                  
+nobody dnsmasq    2899  4 udp4  *:67                  *:*                  
+root   syslogd    2855  7 udp4  *:514                 *:*                  

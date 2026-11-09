@@ -1,0 +1,2 @@
+$ pfctl -ss
+pfctl: /dev/pf: No such file or directory
