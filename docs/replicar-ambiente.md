@@ -1,13 +1,13 @@
 # Replicar o ambiente e os testes em outro Mac
 
-Guia para repetir no UTM o que o Mateus rodou em 10/11/2026: Fases 0, 1 e 2A, testes 01, 02, 03 (com e sem rota) e 05.
-Evidências: `docs/evidencias/20261110-125035-teste01/` e `docs/evidencias/20261110-1421-fase2a/`.
+Guia para repetir no UTM o que o Mateus rodou em 10/11/2026: Fases 0, 1, 2A e 3 (testes 01 a 05 e persistência após reinício).
+Evidências: `docs/evidencias/20261110-125035-teste01/`, `docs/evidencias/20261110-1421-fase2a/` e `docs/evidencias/20261110-162724-fase3-pos-reboot/`. Resultados resumidos em `docs/validacao.md`.
 
 > Documento interno da dupla (ensaio). Não faz parte da documentação de entrega.
 
 ## 0. Antes de começar
 
-- [ ] O trabalho do Mateus está na branch **`feature/rede-pf`** (commit `b166756`). Depois do push dele:
+- [ ] O trabalho do Mateus está na branch **`feature/rede-pf`**. Depois do push dele:
   ```sh
   git fetch origin
   git switch feature/rede-pf     # ou: git pull na main, se a branch já tiver sido juntada
@@ -111,7 +111,31 @@ sudo route delete -net 10.20.0.0/16   # desfazer ao final
 
 Na roteadora, durante o teste: `doas tcpdump -l -ni vtnet1 host <GW_WAN>` deve mostrar **só** a conexão da porta 80 → `10.20.0.10:8080`.
 
-**Ainda falta (para ninguém):** repetir o teste 04 com o PF ligado e repetir tudo depois de reiniciar as duas VMs.
+### Teste 04 (DHCP) com o PF ligado
+
+Renovar o IP derruba a sessão SSH no cliente. Rode no **console do UTM do cliente**, ou num script com `nohup` que grave a saída em arquivo:
+
+```sh
+# B/C. Reserva e renovação: 3 vezes, sempre 10.20.0.10
+doas service dhclient restart vtnet0; ifconfig vtnet0 | grep "inet "
+
+# A. Cliente comum (só um cliente cabe no link: troca o MAC por alguns segundos)
+doas sh -c 'pkill dhclient; ifconfig vtnet0 inet 10.20.0.10 delete; ifconfig vtnet0 ether 52:54:00:4c:41:99; dhclient vtnet0'
+ifconfig vtnet0 | grep "inet "        # IP do pool (10.20.0.100–200)
+host www.unb.br                       # DNS entregue pelo DHCP, via NAT
+doas sh -c 'pkill dhclient; ifconfig vtnet0 inet "$(ifconfig vtnet0 | awk "\$1==\"inet\"{print \$2; exit}")" delete; ifconfig vtnet0 ether 52:54:00:4c:41:10; dhclient vtnet0'   # volta a 10.20.0.10
+```
+
+Na roteadora: `grep -E "DHCP(REQUEST|ACK|NAK)" /var/log/dnsmasq.log | tail` (ids de transação novos a cada renovação; NAK quando o MAC muda) e `grep -c "(vtnet0)" /var/log/dnsmasq.log` → `0` (nada vaza para a WAN).
+
+### Persistência
+
+1. Roteadora: `doas shutdown -r now`. Após o boot, sem rodar nada: `ifconfig vtnet1`, `sysctl net.inet.ip.forwarding`, `doas pfctl -si` (Enabled), `doas pfctl -sn`, `service dnsmasq status`.
+2. Cliente: `doas shutdown -r now`. Após o boot: `ifconfig vtnet0` → `10.20.0.10` (sem `dhclient` manual).
+3. Repetir 02, 03 (sem rota) e 05. O servidor TCP não sobe sozinho: rode `sh tcp-server.sh 8080` de novo.
+4. Coletar evidências na roteadora: `cd ~/trab02_frc && doas sh tests/collect-evidence.sh`.
+
+**Ainda falta:** `scripts/apply.sh`, `status.sh` e `rollback.sh` (stubs) e a bateria com as duas pessoas presentes.
 
 ## 6. Problemas encontrados
 
@@ -131,6 +155,8 @@ Na roteadora, durante o teste: `doas tcpdump -l -ni vtnet1 host <GW_WAN>` deve m
 | `tcpdump` com `timeout` grava arquivo vazio | Saída em buffer, perdida quando o `timeout` mata o processo | `tcpdump -l` |
 | Teste 03 com rota: o Mac faz `ARP who-has 10.20.0.10` em vez de mandar para a roteadora | Rota velha `10.20.0.10 ... bridge100` presa à interface; `route delete` simples não apaga | `sudo route -n delete 10.20.0.10 -ifscope bridge100` |
 | Mexer no UTM pelo terminal (`utmctl`) | O macOS bloqueia sem permissão de Automação | Fazer pela tela do UTM |
+| Ao trocar o MAC do cliente, o dnsmasq responde `DHCPNAK ... address not available` | O cliente pede o IP antigo, reservado para outro MAC | Esperado: o `dhclient` refaz o DISCOVER e recebe um IP do pool |
+| `tests/collect-evidence.sh` grava a pasta como root | Rodou com `doas` | Copiar com `ssh ... 'doas tar -czf - <pasta>' \| tar -xzf -` |
 
 ## 7. Decisões já tomadas
 

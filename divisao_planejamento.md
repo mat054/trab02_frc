@@ -14,7 +14,7 @@ Este documento define **quem implementa cada parte**, **quais arquivos cada inte
 | **Base** (M0) | **Fase 0** — VM roteadora ✅, interfaces ✅ e topologia inicial ✅ | **Fase 0** — VM cliente na LAN ✅, host WAN de teste ✅ e MAC do cliente reservado ✅ | 🟡 Em andamento — partes individuais concluídas; faltam a confirmação com o professor e a revisão conjunta do contrato; teste integrado no Mac de Mateus |
 | **Rede básica** (M1) | **Fase 1** — WAN, LAN `/16`, rota padrão e `ip.forwarding` | **Fase 1** — validar a rede sem alterar a configuração de Mateus; `tests/01-connectivity.md` ✅ | ✅ Concluída em 10/11 — `01-setup-network.sh` aplicado e persistente após reinício; teste 01 OK no roteador e no cliente (VM cliente clonada no Mac de Mateus) |
 | **Paralelo 1** (M2) | **Fase 2A** ✅ — NAT, isolamento e DNAT no PF; apoio à integração do DHCP ✅ | **Fase 2B** ✅ — DHCP, reserva, *leases* e logs; roteiros de teste e servidor TCP ✅ | ✅ Concluída em 10/11 — PF ativo e persistente no roteador de Mateus; DHCP de Luiza rodando no mesmo roteador |
-| **Integração 1** (M3) | **Fase 3** — testes integrados | **Fase 3** — testes integrados | 🟡 Em andamento — testes 01, 02, 03 e 05 OK no Mac de Mateus (o 03 com rota revelou uma falha no PF, corrigida com `tag DNAT`); falta repetir o 04 e tudo após reinício |
+| **Integração 1** (M3) | **Fase 3** — testes integrados | **Fase 3** — testes integrados | 🟡 Quase concluída — em 10/11, no Mac de Mateus, testes 01 a 05 e persistência após reinício OK (o 03 com rota revelou uma falha no PF, corrigida com `tag DNAT`); faltam `apply.sh`/`status.sh`/`rollback.sh` e a bateria com as duas pessoas presentes |
 | **Final** (M4) | **Fase 4** — arquitetura e instalação de rede/PF | **Fase 4** — validação, evidências e limitações | ⬜ Pendente |
 | **Entrega** | Revisão cruzada, ensaio e ZIP | Revisão cruzada, ensaio e ZIP | ⬜ Pendente |
 
@@ -24,7 +24,7 @@ Este documento define **quem implementa cada parte**, **quais arquivos cada inte
 
 - ~~**Ping (ICMP) da LAN para fora**~~ **Resolvido em 10/11:** o enunciado só exige isolamento WAN → LAN e pede para validar conectividade, então o ping LAN → WAN é **liberado**. `tests/03-isolation.md` e `docs/validacao.md` foram ajustados; `tests/01` e `tests/02` já esperavam resposta.
 - **`docs/limitacoes.md`:** afirma que o enunciado proíbe ambiente virtualizado, mas o enunciado só fixa limites de escore por SO e não trata de virtualização. Reescrever como "confirmar com o professor" (Luiza).
-- **Evidência de renovação do DHCP:** `docs/validacao.md` cita três renovações, mas `dhcp-log.txt` mostra um único ciclo DISCOVER → ACK. Renovar e rodar `tests/collect-evidence.sh` de novo (Luiza).
+- ~~**Evidência de renovação do DHCP**~~ **Resolvido em 10/11:** três renovações registradas com ids de transação distintos em `docs/evidencias/20261110-162724-fase3-pos-reboot/` (`teste04-cliente.log` e `dhcp-log.txt`).
 - **LAN de desenvolvimento:** o link QEMU em loopback comporta um único cliente e exige ligar o roteador antes do cliente, enquanto o plano prevê um cliente comum e um reservado. Decidir se basta demonstrar com um cliente (ambos). **Decidido em 10/11:** o teste integrado roda no Mac de Mateus; falta levar para lá uma VM cliente (exportada por Luiza ou nova, com a ponta `connect` e o MAC `52:54:00:4c:41:10`).
 - **Confirmar com o professor:** FreeBSD em VM, valor de `X`, DNS a usar, canal de submissão e ambiente de validação da documentação no LDS (ambos).
 - **Branches:** Luiza commitou direto na `main`. Decidir se a dupla mantém as branches `feature/*` ou assume a `main` (ambos).
@@ -151,8 +151,8 @@ Na **Fase 0**, os dois devem concordar e registrar em `config/lab.env.example`:
 **Ambos — executar:**
 - [ ] Ajustar `scripts/apply.sh`, `scripts/status.sh` e `scripts/rollback.sh` para instalação, diagnóstico e reversão.
 - [ ] Rodar a bateria de testes completa, com as duas pessoas presentes.
-- [ ] Registrar **resultado real** e evidência de cada teste em `docs/validacao.md` e `docs/evidencias/` (Luiza organiza, Mateus revisa).
-- [ ] Corrigir problemas de integração antes de considerar a fase encerrada.
+- [x] Registrar **resultado real** e evidência de cada teste em `docs/validacao.md` e `docs/evidencias/` (Luiza organiza, Mateus revisa). Preenchido em 10/11 por Mateus; falta a revisão de Luiza.
+- [x] Corrigir problemas de integração antes de considerar a fase encerrada (acesso direto a `10.20.0.10:8080` corrigido com `tag DNAT`).
 
 **Fase concluída quando:** NAT, isolamento, DHCP, reserva, *leases* e DNAT funcionam **na mesma topologia**, com evidências verificáveis.
 

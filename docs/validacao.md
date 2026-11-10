@@ -28,13 +28,16 @@ Roteiro completo para demonstrar os requisitos no LDS. Cada teste tem roteiro de
 
 ## Resultados
 
-_Preencher na Fase 3 (integração), com data, quem executou e o arquivo de evidência._
+Ambiente de desenvolvimento (UTM): WAN `192.168.64.0/24` no papel de `192.168.X.0/24`, roteador `192.168.64.2`, host WAN = o Mac (`192.168.64.1`). Integração em 10/11/2026 no Mac de Mateus, com o PF ligado.
 
 | Teste | Data | Resultado | Evidência |
 |---|---|---|---|
-| 01 | | | |
-| 02 | | | |
-| 03 | | | |
+| 01 | 10/11/2026 | **OK** — roteador com `vtnet0` `192.168.64.2/24` e `vtnet1` `10.20.0.1/16`, `default` → `192.168.64.1`, `ip.forwarding=1`; cliente com `10.20.0.10/16`, gateway `10.20.0.1`, pinga o roteador | `docs/evidencias/20261110-125035-teste01/` |
+| 02 | 10/11/2026 | **OK** — o mesmo ping aparece como `10.20.0.10 > 192.168.64.1` na LAN e `192.168.64.2 > 192.168.64.1` na WAN; `pfctl -ss` mostra a tradução; `fetch` para a internet OK | `docs/evidencias/20261110-1421-fase2a/`; repetido após reinício em `20261110-162724-fase3-pos-reboot/` |
+| 03 | 10/11/2026 | **OK após correção** — com rota `10.20.0.0/16` no Mac: ping, `10.20.0.10:22`, `10.20.0.10:8080` direto e `192.168.64.2:8080` dão timeout; só a porta 80 (DNAT) entra. A 1ª rodada mostrou `10.20.0.10:8080` acessível direto; corrigido com `tag DNAT`/`tagged DNAT` no PF | `docs/evidencias/20261110-1421-fase2a/teste03-com-rota.txt` |
 | 04 | 09/11/2026 | **OK** (ambiente UTM) — cliente `52:54:00:4c:41:10` recebeu `10.20.0.10/16`, gateway `10.20.0.1`, DNS `192.168.64.1`; 3 renovações mantiveram o IP; DORA e leases registrados | `docs/evidencias/20261109-144603/` (`dhcp-log.txt`, `leases.txt`, `dnsmasq-conf.txt`) — Luiza |
-| 05 | | | |
-| 06 | | | |
+| 04 | 10/11/2026 | **OK com PF ligado** — 3 renovações com `10.20.0.10` e ids de transação novos; cliente comum (MAC trocado para `...41:99`) recebeu `10.20.0.126` do pool; DNS entregue resolve `www.unb.br` via NAT; nenhuma linha `(vtnet0)` no log do dnsmasq | `docs/evidencias/20261110-162724-fase3-pos-reboot/` (`teste04-cliente.log`, `dhcp-log.txt`, `leases.txt`) |
+| 05 | 10/11/2026 | **OK** — do Mac, `nc 192.168.64.2 80` recebe `OK cliente-lan ... porta 8080`; o texto enviado aparece no servidor; `pfctl -ss` mostra `10.20.0.10:8080 (192.168.64.2:80) <- 192.168.64.1` | `docs/evidencias/20261110-1421-fase2a/`; repetido após reinício |
+| 06 | 10/11/2026 | **OK** — após `shutdown -r` do roteador, rede, forwarding, PF e dnsmasq voltam sozinhos; após `shutdown -r` do cliente, ele recebe `10.20.0.10` no boot; 02, 03 (sem rota) e 05 repetidos com sucesso | `docs/evidencias/20261110-162724-fase3-pos-reboot/resumo-testes.txt` |
+
+Limitação: no UTM só cabe um cliente no link da LAN, então o "cliente comum" do teste 04 foi simulado trocando o MAC do cliente reservado por alguns segundos. `scripts/apply.sh` e `scripts/status.sh`, citados na preparação, ainda não foram implementados: os scripts foram rodados um a um (`01`, `03`, `02`).

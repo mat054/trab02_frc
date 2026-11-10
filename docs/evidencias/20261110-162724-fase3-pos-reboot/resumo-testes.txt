@@ -1,0 +1,48 @@
+# Fase 3 — testes integrados, 10/11/2026 16:25–16:27, Mac de Mateus (UTM)
+# Roteador freebsd-router: vtnet0 WAN 192.168.64.2 | vtnet1 LAN 10.20.0.1/16
+# Cliente cliente-lan: MAC 52:54:00:4c:41:10 (reservado -> 10.20.0.10)
+# Host WAN de teste: o Mac (192.168.64.1)
+# Demais arquivos desta pasta: tests/collect-evidence.sh no roteador, após os reinícios.
+
+## Teste 04 — DHCP com o PF ligado (antes dos reinícios)
+Saída completa no cliente: teste04-cliente.log; lado do roteador: dhcp-log.txt e leases.txt.
+- B. Reserva: 3x "service dhclient restart vtnet0" -> sempre "bound to 10.20.0.10".
+- C. Renovação: cada uma gera DHCPREQUEST + DHCPACK com id de transação novo
+  (897818470, 4018940044, 868325157).
+- A. Cliente comum: MAC trocado temporariamente para 52:54:00:4c:41:99 ->
+  DHCPNAK (pediu 10.20.0.10, reservado a outro MAC), DISCOVER/OFFER/REQUEST/ACK ->
+  10.20.0.126/16 (pool), default 10.20.0.1, nameserver 192.168.64.1,
+  "www.unb.br has address 164.41.102.70" (DNS entregue pelo DHCP, passando pelo NAT).
+  Ao voltar ao MAC reservado: NAK do .126, novo DORA -> 10.20.0.10.
+- E. Sem vazamento: sockstat mostra dnsmasq em *:67 (curinga, ver tests/04 E);
+  "grep -c '(vtnet0)' /var/log/dnsmasq.log" = 0, todo o log é DHCP...(vtnet1).
+
+## Persistência — "doas shutdown -r now" no roteador (16:26)
+Após o boot, sem nenhum comando manual:
+  vtnet0 inet 192.168.64.2/24 | vtnet1 inet 10.20.0.1/16
+  default 192.168.64.1 | 10.20.0.0/16 -> vtnet1 | net.inet.ip.forwarding: 1
+  pfctl -si: Status: Enabled | pfctl -sn: nat ... e rdr ... tag DNAT
+  service dnsmasq status: running
+
+## Persistência — "doas shutdown -r now" no cliente (16:26)
+Após o boot: vtnet0 inet 10.20.0.10/16 (DHCPREQUEST/ACK às 16:26:53), default 10.20.0.1
+$ ping -c 2 10.20.0.1          -> 2/2
+$ ping -c 2 192.168.64.1       -> 2/2 (via NAT)
+$ host www.unb.br              -> www.unb.br has address 164.41.102.70
+$ fetch https://www.freebsd.org/ -> 21 kB OK
+
+## Testes repetidos após os dois reinícios
+### 02 NAT — tcpdump -l -ni vtnet0 durante ping do cliente para 192.168.64.1
+16:27:20.869645 IP 192.168.64.2 > 192.168.64.1: ICMP echo request, id 48476, seq 0, length 64
+16:27:20.869941 IP 192.168.64.1 > 192.168.64.2: ICMP echo reply, id 48476, seq 0, length 64
+(origem na WAN é o IP do roteador, nunca 10.20.0.10; estados em pf-estados.txt)
+
+### 05 DNAT — cliente: sh tests/tcp-server.sh 8080 | Mac:
+$ (printf "pos-reboot\n"; sleep 2) | nc -v -G 3 192.168.64.2 80
+Connection to 192.168.64.2 port 80 [tcp/http] succeeded!
+OK cliente-lan Tue Nov 10 16:26:58 -03 2026 porta 8080
+Log do servidor no cliente: "pos-reboot"
+
+### 03 Isolamento (sem rota no Mac; a parte com rota está em ../20261110-1421-fase2a/teste03-com-rota.txt)
+$ nc -vz -G 3 -w 3 192.168.64.2 8080 -> Operation timed out
+$ ping -c 2 -t 4 10.20.0.10          -> 100% perda
