@@ -55,11 +55,11 @@ Só edite com a VM **desligada** (*Edit → QEMU → Arguments*, um argumento po
 
 ```sh
 cd ~/trab02_frc
-doas sh scripts/01-setup-network.sh     # LAN 10.20.0.1/16, forwarding, rc.conf
-doas sh scripts/03-setup-dhcp.sh        # dnsmasq (DHCP + reserva)
-doas sh -c "nohup sh scripts/02-setup-firewall.sh > /tmp/pf-apply.log 2>&1 &"
-cat /tmp/pf-apply.log
+doas sh scripts/apply.sh      # 00 (pré-requisitos) -> 01 (rede) -> 03 (DHCP) -> 02 (PF) -> status; log em /var/log/trab02-apply.log
+doas sh scripts/status.sh     # deve terminar com "status: tudo OK"
 ```
+
+Equivale a rodar `01-setup-network.sh`, `03-setup-dhcp.sh` e `02-setup-firewall.sh` nessa ordem. Para desfazer: `doas sh scripts/rollback.sh --sim`.
 
 - O script 01 **sobrescreve** a configuração feita à mão (`ifconfig_vtnet1`, `gateway_enable`). Backup em `/etc/rc.conf.bak.<data>`.
 - O PF vai com `nohup` porque a sessão SSH aberta **pode cair** quando ele liga. Reconecte e leia o log.
@@ -135,7 +135,7 @@ Na roteadora: `grep -E "DHCP(REQUEST|ACK|NAK)" /var/log/dnsmasq.log | tail` (ids
 3. Repetir 02, 03 (sem rota) e 05. O servidor TCP não sobe sozinho: rode `sh tcp-server.sh 8080` de novo.
 4. Coletar evidências na roteadora: `cd ~/trab02_frc && doas sh tests/collect-evidence.sh`.
 
-**Ainda falta:** `scripts/apply.sh`, `status.sh` e `rollback.sh` (stubs) e a bateria com as duas pessoas presentes.
+**Ainda falta:** a bateria com as duas pessoas presentes.
 
 ## 6. Problemas encontrados
 

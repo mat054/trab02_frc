@@ -5,9 +5,22 @@ Roteiro completo para demonstrar os requisitos no LDS. Cada teste tem roteiro de
 ## Preparação (antes da demonstração)
 
 1. `cp config/lab.env.example config/lab.env` e preencher `X`, `Y`, `DNS_IP` e `RESERVED_MAC` reais.
-2. No roteador, como root: `sh scripts/apply.sh` (rede → PF → DHCP) e `sh scripts/status.sh`.
+2. No roteador, como root: `sh scripts/apply.sh` (pré-requisitos → rede → DHCP → PF) e `sh scripts/status.sh` (deve terminar com `status: tudo OK`).
 3. Validar sintaxe: `pfctl -nf /etc/pf.conf` e `dnsmasq --test -C /usr/local/etc/dnsmasq.conf`.
-4. Ligar o cliente reservado na LAN e um host de teste na WAN. Em desenvolvimento (UTM), ligar o roteador antes do cliente; o cliente só tem a placa da LAN, então o acesso é pelo roteador: `ssh -J root@<IP_WAN_ROTEADOR> root@10.20.0.10`.
+4. Ligar o cliente reservado na LAN e um host de teste na WAN. Em desenvolvimento (UTM), ligar o roteador antes do cliente; o cliente só tem a placa da LAN, então o acesso é pelo roteador: `ssh -o ConnectTimeout=40 -J <usuario>@<IP_WAN_ROTEADOR> <usuario>@10.20.0.10`.
+5. No cliente reservado, subir o servidor do DNAT: `sh tests/tcp-server.sh 8080`.
+
+## Roteiro da demonstração (resumo)
+
+| Passo | Onde | Comando | O que mostrar |
+|---|---|---|---|
+| 1 | Roteador | `sh scripts/status.sh` | 10 conferências OK: interfaces, rota, forwarding, PF, NAT, DNAT, bloqueio, dnsmasq, persistência |
+| 2 | Cliente | `ifconfig vtnet0`, `netstat -rn`, `cat /etc/resolv.conf` | `10.20.0.10/16`, gateway `10.20.0.1` e DNS recebidos por DHCP |
+| 3 | Roteador | `cat /var/db/dnsmasq.leases`, `grep DHCPACK /var/log/dnsmasq.log` | Concessão da reserva no arquivo e no log |
+| 4 | Roteador + cliente | `tcpdump -ni vtnet0 icmp` enquanto o cliente faz `ping 192.168.X.1` | Na WAN, a origem é `192.168.X.Y`, nunca `10.20.0.10` (NAT) |
+| 5 | Host WAN | `ping 10.20.0.10` e `nc -vz 10.20.0.10 8080` (com rota para `10.20.0.0/16` via o roteador) | Tudo dá timeout (isolamento) |
+| 6 | Host WAN | `nc -v 192.168.X.Y 80` e digitar um texto | Chega `OK <cliente> ... porta 8080`; o texto aparece no servidor (DNAT) |
+| 7 | Roteador | `pfctl -ss` | Estados do NAT e do DNAT |
 
 ## Ordem dos testes
 
@@ -40,4 +53,4 @@ Ambiente de desenvolvimento (UTM): WAN `192.168.64.0/24` no papel de `192.168.X.
 | 05 | 10/11/2026 | **OK** — do Mac, `nc 192.168.64.2 80` recebe `OK cliente-lan ... porta 8080`; o texto enviado aparece no servidor; `pfctl -ss` mostra `10.20.0.10:8080 (192.168.64.2:80) <- 192.168.64.1` | `docs/evidencias/20261110-1421-fase2a/`; repetido após reinício |
 | 06 | 10/11/2026 | **OK** — após `shutdown -r` do roteador, rede, forwarding, PF e dnsmasq voltam sozinhos; após `shutdown -r` do cliente, ele recebe `10.20.0.10` no boot; 02, 03 (sem rota) e 05 repetidos com sucesso | `docs/evidencias/20261110-162724-fase3-pos-reboot/resumo-testes.txt` |
 
-Limitação: no UTM só cabe um cliente no link da LAN, então o "cliente comum" do teste 04 foi simulado trocando o MAC do cliente reservado por alguns segundos. `scripts/apply.sh` e `scripts/status.sh`, citados na preparação, ainda não foram implementados: os scripts foram rodados um a um (`01`, `03`, `02`).
+Limitação: no UTM só cabe um cliente no link da LAN, então o "cliente comum" do teste 04 foi simulado trocando o MAC do cliente reservado por alguns segundos. Nos testes acima os scripts foram rodados um a um (`01`, `03`, `02`); depois, `rollback.sh --sim` seguido de `apply.sh` reconstruiu o roteador com `status.sh` todo OK e DNAT funcionando (10/11/2026).
