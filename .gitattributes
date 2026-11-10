@@ -1,0 +1,5 @@
+# Documentos internos da dupla: ficam no repositório, mas fora do ZIP de entrega (git archive).
+PLANEJAMENTO_TRABALHO_02_REDES.md export-ignore
+divisao_planejamento.md export-ignore
+docs/replicar-ambiente.md export-ignore
+.gitattributes export-ignore

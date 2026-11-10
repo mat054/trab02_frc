@@ -1,0 +1,2 @@
+$ sysctl net.inet.ip.forwarding
+net.inet.ip.forwarding: 1

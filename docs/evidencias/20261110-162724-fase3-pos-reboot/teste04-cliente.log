@@ -1,0 +1,50 @@
+== renovação 1 (16:25:00)
+Stopping dhclient.
+Waiting for PIDS: 3923.
+Starting dhclient.
+DHCPREQUEST on vtnet0 to 255.255.255.255 port 67
+DHCPACK from 10.20.0.1
+bound to 10.20.0.10 -- renewal in 21600 seconds.
+	inet 10.20.0.10 netmask 0xffff0000 broadcast 10.20.255.255
+== renovação 2 (16:25:06)
+Stopping dhclient.
+Waiting for PIDS: 4309.
+Starting dhclient.
+DHCPREQUEST on vtnet0 to 255.255.255.255 port 67
+DHCPACK from 10.20.0.1
+bound to 10.20.0.10 -- renewal in 21600 seconds.
+	inet 10.20.0.10 netmask 0xffff0000 broadcast 10.20.255.255
+== renovação 3 (16:25:12)
+Stopping dhclient.
+Waiting for PIDS: 4405.
+Starting dhclient.
+DHCPREQUEST on vtnet0 to 255.255.255.255 port 67
+DHCPACK from 10.20.0.1
+bound to 10.20.0.10 -- renewal in 21600 seconds.
+	inet 10.20.0.10 netmask 0xffff0000 broadcast 10.20.255.255
+== A: cliente comum, MAC trocado para 52:54:00:4c:41:99 (16:25:18)
+Stopping dhclient.
+Waiting for PIDS: 4505.
+DHCPREQUEST on vtnet0 to 255.255.255.255 port 67
+DHCPNAK from 10.20.0.1
+DHCPDISCOVER on vtnet0 to 255.255.255.255 port 67 interval 8
+DHCPOFFER from 10.20.0.1
+DHCPREQUEST on vtnet0 to 255.255.255.255 port 67
+DHCPACK from 10.20.0.1
+bound to 10.20.0.126 -- renewal in 21600 seconds.
+	ether 52:54:00:4c:41:99
+	inet 10.20.0.126 netmask 0xffff0000 broadcast 10.20.255.255
+default            10.20.0.1          UGS          vtnet0
+nameserver 192.168.64.1
+www.unb.br has address 164.41.102.70
+== volta ao MAC reservado (16:25:26)
+DHCPREQUEST on vtnet0 to 255.255.255.255 port 67
+DHCPNAK from 10.20.0.1
+DHCPDISCOVER on vtnet0 to 255.255.255.255 port 67 interval 3
+DHCPOFFER from 10.20.0.1
+DHCPREQUEST on vtnet0 to 255.255.255.255 port 67
+DHCPACK from 10.20.0.1
+bound to 10.20.0.10 -- renewal in 21600 seconds.
+	ether 52:54:00:4c:41:10
+	inet 10.20.0.10 netmask 0xffff0000 broadcast 10.20.255.255
+== fim (16:25:31)

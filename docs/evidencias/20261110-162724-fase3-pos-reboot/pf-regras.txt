@@ -1,0 +1,8 @@
+$ pfctl -sr
+block drop in on vtnet0 all
+pass in on vtnet0 inet proto tcp from any to 10.20.0.10 port = http-alt flags S/SA keep state tagged DNAT
+pass in on vtnet0 inet proto tcp from any to (vtnet0) port = ssh flags S/SA keep state
+pass in on vtnet0 inet proto icmp from any to (vtnet0) icmp-type echoreq keep state
+pass in on vtnet0 inet proto udp from any port = bootps to any port = bootpc keep state
+pass in on vtnet1 all flags S/SA keep state
+pass out all flags S/SA keep state

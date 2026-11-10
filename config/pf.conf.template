@@ -1,1 +1,45 @@
-# Regras PF: NAT, isolamento e DNAT
+# /etc/pf.conf — roteador do Trabalho 02 (NAT + isolamento + DNAT)
+# Gerado por scripts/02-setup-firewall.sh a partir de config/pf.conf.template.
+# O PF usa a ÚLTIMA regra que casa (exceto regras com "quick").
+
+wan     = "__WAN_IF__"
+lan     = "__LAN_IF__"
+lan_net = "__LAN_CIDR__"
+srv     = "__RESERVED_IP__"
+wan_port = "__DNAT_WAN_PORT__"
+srv_port = "__DNAT_LAN_PORT__"
+
+set skip on lo0
+set block-policy drop
+
+# --- Tradução -------------------------------------------------------------
+# NAT: a LAN sai pela WAN com o IP do roteador. "($wan)" acompanha o IP
+# mesmo se ele vier por DHCP e mudar.
+nat on $wan inet from $lan_net to any -> ($wan)
+
+# DNAT: TCP na porta 80 do IP WAN é reescrito para o servidor da LAN:8080.
+# O "tag" carimba o pacote redirecionado; só pacotes carimbados passam no
+# filtro. Assim, quem tem rota para a LAN não chega direto em $srv:$srv_port.
+rdr on $wan inet proto tcp from any to ($wan) port $wan_port tag DNAT -> $srv port $srv_port
+
+# --- Filtragem ------------------------------------------------------------
+# Isolamento: tudo que é iniciado do lado de fora é descartado...
+block in on $wan all
+
+# ...exceto:
+# 1. A exceção do DNAT: só o que entrou pela porta $wan_port e foi carimbado
+#    pela regra rdr (destino já reescrito para $srv:$srv_port).
+pass in on $wan inet proto tcp from any to $srv port $srv_port tagged DNAT keep state
+# 2. Administração do próprio roteador por SSH (não dá acesso à LAN).
+pass in on $wan inet proto tcp from any to ($wan) port 22 keep state
+# 3. Ping no IP WAN do roteador, para diagnóstico (não alcança a LAN).
+pass in on $wan inet proto icmp from any to ($wan) icmp-type echoreq keep state
+# 4. Respostas do servidor DHCP da rede externa, caso a WAN use DHCP.
+pass in on $wan inet proto udp from any port 67 to any port 68
+
+# A LAN pode iniciar qualquer tráfego: para o roteador (DHCP, ping) e para
+# fora (sai pelo NAT). As respostas voltam pelo estado criado aqui.
+pass in on $lan all keep state
+
+# O roteador pode enviar qualquer coisa; as respostas voltam pelo estado.
+pass out all keep state

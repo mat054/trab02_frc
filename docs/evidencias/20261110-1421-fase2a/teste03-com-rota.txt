@@ -1,0 +1,34 @@
+# Teste 03 — isolamento com rota no Mac (host WAN), 10/11/2026 ~16:04
+# No Mac: sudo route add -net 10.20.0.0/16 192.168.64.2  (removida ao final)
+#
+# 1ª rodada (16:03) revelou falha: "nc -vz 10.20.0.10 8080" direto PASSOU, porque
+# a regra "pass in on $wan ... to 10.20.0.10 port 8080" não distinguia pacote
+# redirecionado pelo DNAT de pacote enviado direto. Correção: "rdr ... tag DNAT"
+# e "pass in ... tagged DNAT". 2ª rodada abaixo, após a correção.
+
+$ ping -c 3 -t 5 10.20.0.10
+3 packets transmitted, 0 packets received, 100.0% packet loss
+
+$ nc -vz -G 3 10.20.0.10 8080   (direto, sem passar pela porta 80)
+nc: connectx to 10.20.0.10 port 8080 (tcp) failed: Operation timed out
+
+$ nc -vz -G 3 10.20.0.10 22
+nc: connectx to 10.20.0.10 port 22 (tcp) failed: Operation timed out
+
+$ nc -vz -G 3 192.168.64.2 8080
+nc: connectx to 192.168.64.2 port 8080 (tcp) failed: Operation timed out
+
+$ (printf "ola de novo\n"; sleep 2) | nc -v -G 3 192.168.64.2 80   (exceção DNAT)
+Connection to 192.168.64.2 port 80 [tcp/http] succeeded!
+OK cliente-lan Tue Nov 10 16:03:19 -03 2026 porta 8080
+
+# Roteador: tcpdump -ni vtnet1 host 192.168.64.1 durante todos os comandos acima.
+# Só a conexão do DNAT (porta 80 -> 10.20.0.10:8080) aparece dentro da LAN.
+16:04:15.182681 IP 192.168.64.1.57249 > 10.20.0.10.8080: Flags [SEW]
+16:04:15.183656 IP 10.20.0.10.8080 > 192.168.64.1.57249: Flags [S.E]
+16:04:15.184921 IP 192.168.64.1.57249 > 10.20.0.10.8080: Flags [P.], length 12
+16:04:17.185545 IP 10.20.0.10.8080 > 192.168.64.1.57249: Flags [F.]
+
+# Roteador: pfctl -vsr (regra de bloqueio)
+block drop in on vtnet0 all
+  [ Evaluations: 67        Packets: 38        Bytes: 3640        States: 0     ]

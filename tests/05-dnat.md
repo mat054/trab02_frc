@@ -24,8 +24,8 @@ Conexão feita de **outro host na WAN** à porta 80 do roteador chega ao servido
 
 | Onde | Evidência |
 |---|---|
-| host WAN | `Connection to 192.168.X.Y 80 port [tcp/http] succeeded!` e a linha `OK cliente-reservado <data> porta 8080`; o texto digitado volta ecoado |
-| servidor LAN | recebe a conexão e o texto |
+| host WAN | `Connection to 192.168.X.Y 80 port [tcp/http] succeeded!` e a linha `OK <hostname do cliente> <data> porta 8080` |
+| servidor LAN | o texto digitado no host WAN aparece no terminal do servidor (o servidor não ecoa de volta: o que se digita no terminal do servidor é que vai para o host WAN) |
 | `tcpdump` LAN | `192.168.X.Z.porta > 10.20.0.10.8080` (destino reescrito pelo DNAT) |
 | `pfctl -ss` | estado `192.168.X.Z -> 192.168.X.Y:80 -> 10.20.0.10:8080` |
 

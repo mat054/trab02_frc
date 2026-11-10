@@ -1,0 +1,11 @@
+$ netstat -rn -f inet
+Routing tables
+
+Internet:
+Destination        Gateway            Flags         Netif Expire
+default            192.168.64.1       UGS          vtnet0
+10.20.0.0/16       link#2             U            vtnet1
+10.20.0.1          link#3             UHS             lo0
+127.0.0.1          link#3             UH              lo0
+192.168.64.0/24    link#1             U            vtnet0
+192.168.64.2       link#3             UHS             lo0

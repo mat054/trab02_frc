@@ -1,0 +1,3 @@
+$ pfctl -sn
+nat on vtnet0 inet from 10.20.0.0/16 to any -> (vtnet0) round-robin
+rdr on vtnet0 inet proto tcp from any to (vtnet0) port = http tag DNAT -> 10.20.0.10 port 8080

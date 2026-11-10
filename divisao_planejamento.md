@@ -11,12 +11,23 @@ Este documento define **quem implementa cada parte**, **quais arquivos cada inte
 
 | Momento | Mateus | Luiza | Situação |
 |---|---|---|---|
-| **Base** (M0) | **Fase 0** — VM roteadora, interfaces e topologia inicial | **Fase 0** — VM cliente na LAN, host WAN de teste e MAC do cliente reservado | 🟡 Em andamento — estrutura do repositório criada; faltam VMs, topologia e `lab.env.example` |
-| **Rede básica** (M1) | **Fase 1** — WAN, LAN `/16`, rota padrão e `ip.forwarding` | **Fase 1** — validar a rede sem alterar a configuração de Mateus; `tests/01-connectivity.md` | ⬜ Pendente |
-| **Paralelo 1** (M2) | **Fase 2A** — NAT, isolamento e DNAT no PF; apoio à integração do DHCP | **Fase 2B** — DHCP, reserva, *leases* e logs; roteiros de teste e servidor TCP | ⬜ Pendente |
-| **Integração 1** (M3) | **Fase 3** — testes integrados | **Fase 3** — testes integrados | ⬜ Pendente |
-| **Final** (M4) | **Fase 4** — arquitetura e instalação de rede/PF | **Fase 4** — validação, evidências e limitações | ⬜ Pendente |
+| **Base** (M0) | **Fase 0** — VM roteadora ✅, interfaces ✅ e topologia inicial ✅ | **Fase 0** — VM cliente na LAN ✅, host WAN de teste ✅ e MAC do cliente reservado ✅ | 🟡 Em andamento — partes individuais concluídas; faltam a confirmação com o professor e a revisão conjunta do contrato; teste integrado no Mac de Mateus |
+| **Rede básica** (M1) | **Fase 1** — WAN, LAN `/16`, rota padrão e `ip.forwarding` | **Fase 1** — validar a rede sem alterar a configuração de Mateus; `tests/01-connectivity.md` ✅ | ✅ Concluída em 10/11 — `01-setup-network.sh` aplicado e persistente após reinício; teste 01 OK no roteador e no cliente (VM cliente clonada no Mac de Mateus) |
+| **Paralelo 1** (M2) | **Fase 2A** ✅ — NAT, isolamento e DNAT no PF; apoio à integração do DHCP ✅ | **Fase 2B** ✅ — DHCP, reserva, *leases* e logs; roteiros de teste e servidor TCP ✅ | ✅ Concluída em 10/11 — PF ativo e persistente no roteador de Mateus; DHCP de Luiza rodando no mesmo roteador |
+| **Integração 1** (M3) | **Fase 3** — testes integrados | **Fase 3** — testes integrados | 🟡 Quase concluída — em 10/11, no Mac de Mateus, testes 01 a 05 e persistência após reinício OK (o 03 com rota revelou uma falha no PF, corrigida com `tag DNAT`); `apply.sh`/`status.sh`/`rollback.sh` prontos; falta a bateria com as duas pessoas presentes |
+| **Final** (M4) | **Fase 4** — arquitetura e instalação de rede/PF ✅ | **Fase 4** — validação, evidências e limitações ✅ | 🟡 Em andamento — documentação escrita em 10/11 (README, arquitetura, instalação, validação, limitações, checklist; sintaxe validada); faltam a revisão cruzada, o ensaio no LDS e o ZIP final |
 | **Entrega** | Revisão cruzada, ensaio e ZIP | Revisão cruzada, ensaio e ZIP | ⬜ Pendente |
+
+**Última atualização:** 10/11/2026, a partir do commit `e8d8275` (Fase 2B de Luiza) e da verificação da VM roteadora de Mateus por SSH. Os ✅ e as caixas marcadas abaixo refletem o que está no repositório, não o que foi apenas combinado.
+
+## Pendências em aberto
+
+- ~~**Ping (ICMP) da LAN para fora**~~ **Resolvido em 10/11:** o enunciado só exige isolamento WAN → LAN e pede para validar conectividade, então o ping LAN → WAN é **liberado**. `tests/03-isolation.md` e `docs/validacao.md` foram ajustados; `tests/01` e `tests/02` já esperavam resposta.
+- ~~**`docs/limitacoes.md`**~~ **Resolvido em 10/11:** reescrito; a virtualização aparece como ponto a confirmar com o professor, e o arquivo ganhou as limitações encontradas nos testes.
+- ~~**Evidência de renovação do DHCP**~~ **Resolvido em 10/11:** três renovações registradas com ids de transação distintos em `docs/evidencias/20261110-162724-fase3-pos-reboot/` (`teste04-cliente.log` e `dhcp-log.txt`).
+- **LAN de desenvolvimento:** o link QEMU em loopback comporta um único cliente e exige ligar o roteador antes do cliente, enquanto o plano prevê um cliente comum e um reservado. Decidir se basta demonstrar com um cliente (ambos). **Decidido em 10/11:** o teste integrado roda no Mac de Mateus; falta levar para lá uma VM cliente (exportada por Luiza ou nova, com a ponta `connect` e o MAC `52:54:00:4c:41:10`).
+- **Confirmar com o professor:** FreeBSD em VM, valor de `X`, DNS a usar, canal de submissão e ambiente de validação da documentação no LDS (ambos).
+- **Branches:** Luiza commitou direto na `main`. Decidir se a dupla mantém as branches `feature/*` ou assume a `main` (ambos).
 
 ## 1. Responsabilidade principal de cada integrante
 
@@ -50,18 +61,18 @@ Na **Fase 0**, os dois devem concordar e registrar em `config/lab.env.example`:
 **Referência:** [Fase 0 no planejamento](./PLANEJAMENTO_TRABALHO_02_REDES.md#fase-0--acordo-e-ambiente-conjunta)
 
 **Mateus — executar:**
-- [ ] Criar/configurar a **VM roteadora FreeBSD** com duas interfaces de rede, identificando quais serão WAN e LAN.
-- [ ] Verificar que o sistema, as interfaces e o acesso administrativo funcionam.
-- [ ] Registrar a topologia inicial em `docs/arquitetura.md`.
+- [x] Criar/configurar a **VM roteadora FreeBSD** com duas interfaces de rede, identificando quais serão WAN e LAN (`vtnet0` WAN Shared; `vtnet1` LAN, link QEMU com MAC `52:54:00:4c:41:01`).
+- [x] Verificar que o sistema, as interfaces e o acesso administrativo funcionam (FreeBSD 15.1 arm64, SSH por chave).
+- [x] Registrar a topologia inicial em `docs/arquitetura.md`.
 
 **Luiza — executar:**
-- [ ] Preparar a **VM cliente da LAN** e definir como haverá um **host distinto na WAN** para testar o DNAT.
-- [ ] Identificar o **MAC do cliente reservado** e fornecer a Mateus.
-- [ ] Conferir que o cliente LAN está ligado **somente à rede LAN de testes**, sem expor o DHCP à rede do laboratório.
+- [x] Preparar a **VM cliente da LAN** e definir como haverá um **host distinto na WAN** para testar o DNAT (em desenvolvimento, o Mac).
+- [x] Identificar o **MAC do cliente reservado** e fornecer a Mateus (`52:54:00:4c:41:10`, em `config/lab.env.example`).
+- [x] Conferir que o cliente LAN está ligado **somente à rede LAN de testes**, sem expor o DHCP à rede do laboratório.
 
 **Ambos — decidir e registrar:**
 - [ ] Confirmar com o professor a aceitação de FreeBSD virtualizado e o formato do teste presencial.
-- [ ] Criar/revisar `config/lab.env.example` e os valores compartilhados listados na seção 2.
+- [ ] Criar/revisar `config/lab.env.example` e os valores compartilhados listados na seção 2 — preenchido por Luiza; falta Mateus revisar.
 - [ ] Confirmar repositório, branches e acesso às VMs.
 
 **Fase concluída quando:** topologia, interfaces, IPs, cliente reservado e estratégia de teste WAN estão definidos. **Só então a dupla separa o desenvolvimento.**
@@ -71,15 +82,15 @@ Na **Fase 0**, os dois devem concordar e registrar em `config/lab.env.example`:
 **Referência:** [Fase 1 no planejamento](./PLANEJAMENTO_TRABALHO_02_REDES.md#fase-1--rede-básica-e-roteamento-pessoa-a)
 
 **Mateus — implementar:**
-- [ ] Configurar **IP WAN, IP LAN e rota padrão**, respeitando o ambiente virtual ou a rede real do laboratório.
-- [ ] Ativar e tornar persistente o **IPv4 forwarding**.
-- [ ] Implementar `scripts/01-setup-network.sh`.
-- [ ] Descrever os comandos de instalação/configuração em `docs/instalacao.md`.
+- [x] Configurar **IP WAN, IP LAN e rota padrão**, respeitando o ambiente virtual ou a rede real do laboratório (`WAN_IP=DHCP` no UTM; IP estático + `defaultrouter` no LDS).
+- [x] Ativar e tornar persistente o **IPv4 forwarding** (verificado após reinício).
+- [x] Implementar `scripts/01-setup-network.sh`.
+- [x] Descrever os comandos de instalação/configuração em `docs/instalacao.md`.
 
 **Luiza — validar, sem alterar a configuração de Mateus:**
-- [ ] Escrever `tests/01-connectivity.md` com comandos e resultados esperados.
-- [ ] Validar IP/máscara no cliente, alcance do gateway LAN e caminhos de rede disponíveis.
-- [ ] Reportar falhas identificadas para Mateus corrigir.
+- [x] Escrever `tests/01-connectivity.md` com comandos e resultados esperados.
+- [x] Validar IP/máscara no cliente, alcance do gateway LAN e caminhos de rede disponíveis (10/11, no Mac de Mateus, com a VM cliente clonada da roteadora; evidência em `docs/evidencias/20261110-125035-teste01/`). Cliente recebeu `10.20.0.10/16` e gateway `10.20.0.1` por DHCP; ping ao gateway OK; ping a `192.168.64.1` falha, como esperado antes do NAT.
+- [x] Reportar falhas identificadas para Mateus corrigir. Nenhuma na rede básica. Observação: se o cliente liga antes do DHCP estar no ar, um `dhclient` antigo pode apagar o endereço depois; resolver com `doas dhclient vtnet0` no cliente.
 
 **Fase concluída quando:** a VM roteadora tem WAN/LAN e rotas corretas, IPv4 forwarding ativo e conectividade básica verificada.
 
@@ -88,17 +99,19 @@ Na **Fase 0**, os dois devem concordar e registrar em `config/lab.env.example`:
 **Referência:** [Fase 2A no planejamento](./PLANEJAMENTO_TRABALHO_02_REDES.md#fase-2a--nat-política-de-isolamento-e-dnat-pessoa-a)
 
 **Mateus — implementar:**
-- [ ] Criar `config/pf.conf.template` com **NAT de saída da LAN para a WAN**.
-- [ ] Criar regras de **isolamento**, impedindo acesso indevido WAN → LAN, sem bloquear conexões legítimas.
-- [ ] Configurar a regra **DNAT TCP WAN:80 → 10.20.0.10:8080**.
-- [ ] Criar `scripts/02-setup-firewall.sh` com **validação de sintaxe** antes da aplicação das regras.
-- [ ] Registrar como consultar regras/estados do PF e como recuperar acesso caso uma regra bloqueie a administração.
+- [x] Criar `config/pf.conf.template` com **NAT de saída da LAN para a WAN**.
+- [x] Criar regras de **isolamento**, impedindo acesso indevido WAN → LAN, sem bloquear conexões legítimas.
+- [x] Configurar a regra **DNAT TCP WAN:80 → 10.20.0.10:8080**.
+- [x] Criar `scripts/02-setup-firewall.sh` com **validação de sintaxe** antes da aplicação das regras.
+- [x] Registrar como consultar regras/estados do PF e como recuperar acesso caso uma regra bloqueie a administração (`docs/instalacao.md`, seção 2).
 
 **Luiza — desenvolver em paralelo:**
-- [ ] Escrever `tests/02-nat.md` (como comprovar tradução de endereços).
-- [ ] Escrever `tests/03-isolation.md` (tentativa WAN → LAN bloqueada e exceção permitida).
-- [ ] Escrever `tests/05-dnat.md` (cliente WAN → WAN:80 → servidor LAN:8080).
-- [ ] Preparar `tests/tcp-server.sh` para iniciar o serviço TCP na porta **8080** do cliente reservado.
+- [x] Escrever `tests/02-nat.md` (como comprovar tradução de endereços).
+- [x] Escrever `tests/03-isolation.md` (tentativa WAN → LAN bloqueada e exceção permitida).
+- [x] Escrever `tests/05-dnat.md` (cliente WAN → WAN:80 → servidor LAN:8080).
+- [x] Preparar `tests/tcp-server.sh` para iniciar o serviço TCP na porta **8080** do cliente reservado.
+
+> Executados em 10/11 no Mac de Mateus (evidências em `docs/evidencias/20261110-1421-fase2a/`): 02 e 05 OK; 03 OK na parte sem rota. Ajustes nos roteiros: `tests/05` dizia que o servidor ecoa o texto (não ecoa: o texto aparece no terminal do servidor); `tests/03` esperava "recusado" onde o PF dá timeout (`block-policy drop`).
 
 **Fase concluída quando:** as regras do PF foram validadas e estão prontas para os testes conjuntos; os roteiros de NAT, isolamento e DNAT estão preparados. **O DNAT de ponta a ponta só será considerado aprovado na Fase 3.**
 
@@ -107,12 +120,12 @@ Na **Fase 0**, os dois devem concordar e registrar em `config/lab.env.example`:
 **Referência:** [Fase 2B no planejamento](./PLANEJAMENTO_TRABALHO_02_REDES.md#fase-2b--dhcp-e-reserva-pessoa-b)
 
 **Luiza — implementar:**
-- [ ] Criar `config/dnsmasq.conf.template` e restringir a escuta do DHCP **à LAN**.
-- [ ] Configurar distribuição de IPs `10.20.0.100–10.20.0.200`, máscara `/16`, gateway `10.20.0.1` e DNS acordado.
-- [ ] Reservar `10.20.0.10` para o **MAC** do cliente que receberá o tráfego DNAT.
-- [ ] Configurar arquivo de *leases* e logs de DHCP; documentar como consultá-los.
-- [ ] Criar `scripts/03-setup-dhcp.sh` e `tests/04-dhcp.md`.
-- [ ] Validar concessão, renovação e reserva com o cliente LAN.
+- [x] Criar `config/dnsmasq.conf.template` e restringir a escuta do DHCP **à LAN**.
+- [x] Configurar distribuição de IPs `10.20.0.100–10.20.0.200`, máscara `/16`, gateway `10.20.0.1` e DNS acordado.
+- [x] Reservar `10.20.0.10` para o **MAC** do cliente que receberá o tráfego DNAT.
+- [x] Configurar arquivo de *leases* e logs de DHCP; documentar como consultá-los.
+- [x] Criar `scripts/03-setup-dhcp.sh` e `tests/04-dhcp.md`.
+- [ ] Validar concessão, renovação e reserva com o cliente LAN — concessão e reserva validadas no UTM; falta a evidência da renovação.
 
 **Mateus — apoiar integração, sem assumir o DHCP:**
 - [ ] Verificar se a política PF permite tráfego DHCP **na interface LAN**, mantendo-o bloqueado na WAN.
@@ -136,10 +149,10 @@ Na **Fase 0**, os dois devem concordar e registrar em `config/lab.env.example`:
 | Reinício/persistência | Confere retorno da rede e PF | Confere retorno do DHCP e repete testes |
 
 **Ambos — executar:**
-- [ ] Ajustar `scripts/apply.sh`, `scripts/status.sh` e `scripts/rollback.sh` para instalação, diagnóstico e reversão.
+- [x] Ajustar `scripts/apply.sh`, `scripts/status.sh` e `scripts/rollback.sh` para instalação, diagnóstico e reversão (10/11; `rollback.sh --sim` + `apply.sh` testados no roteador).
 - [ ] Rodar a bateria de testes completa, com as duas pessoas presentes.
-- [ ] Registrar **resultado real** e evidência de cada teste em `docs/validacao.md` e `docs/evidencias/` (Luiza organiza, Mateus revisa).
-- [ ] Corrigir problemas de integração antes de considerar a fase encerrada.
+- [x] Registrar **resultado real** e evidência de cada teste em `docs/validacao.md` e `docs/evidencias/` (Luiza organiza, Mateus revisa). Preenchido em 10/11 por Mateus; falta a revisão de Luiza.
+- [x] Corrigir problemas de integração antes de considerar a fase encerrada (acesso direto a `10.20.0.10:8080` corrigido com `tag DNAT`).
 
 **Fase concluída quando:** NAT, isolamento, DHCP, reserva, *leases* e DNAT funcionam **na mesma topologia**, com evidências verificáveis.
 
@@ -148,19 +161,19 @@ Na **Fase 0**, os dois devem concordar e registrar em `config/lab.env.example`:
 **Referência:** [Fase 4 no planejamento](./PLANEJAMENTO_TRABALHO_02_REDES.md#fase-4--documentação-ensaio-e-entrega-conjunta)
 
 **Mateus — entregar e revisar:**
-- [ ] Finalizar `docs/arquitetura.md` e parte de rede/PF de `docs/instalacao.md`.
-- [ ] Conferir `01-setup-network.sh`, `02-setup-firewall.sh` e `pf.conf.template`.
-- [ ] Explicar na documentação NAT, isolamento, DNAT e recuperação de falhas de firewall.
+- [x] Finalizar `docs/arquitetura.md` e parte de rede/PF de `docs/instalacao.md`.
+- [x] Conferir `01-setup-network.sh`, `02-setup-firewall.sh` e `pf.conf.template`.
+- [x] Explicar na documentação NAT, isolamento, DNAT e recuperação de falhas de firewall (`docs/arquitetura.md` → "Caminho dos pacotes"; `docs/instalacao.md`, seções 6 e 8).
 
 **Luiza — entregar e revisar:**
-- [ ] Finalizar `docs/validacao.md`, `docs/limitacoes.md` e `docs/evidencias/`.
-- [ ] Conferir `03-setup-dhcp.sh`, `dnsmasq.conf.template` e os roteiros em `tests/`.
-- [ ] Descrever como provar DHCP, reserva, consulta de *leases* e conexão TCP redirecionada.
+- [x] Finalizar `docs/validacao.md`, `docs/limitacoes.md` e `docs/evidencias/` (escritos por Mateus em 10/11; falta a revisão de Luiza).
+- [ ] Conferir `03-setup-dhcp.sh`, `dnsmasq.conf.template` e os roteiros em `tests/` (os roteiros 03 e 05 foram ajustados por Mateus).
+- [x] Descrever como provar DHCP, reserva, consulta de *leases* e conexão TCP redirecionada (`tests/04`, `tests/05`, `docs/instalacao.md` seção 5, `docs/validacao.md`).
 
 **Ambos — entregar:**
-- [ ] Revisar `README.md`, `scripts/apply.sh`, `scripts/status.sh`, `scripts/rollback.sh` e `entrega/checklist.md`.
+- [ ] Revisar `README.md`, `scripts/apply.sh`, `scripts/status.sh`, `scripts/rollback.sh` e `entrega/checklist.md` (escritos e testados por Mateus em 10/11, junto com `scripts/00-check-prerequisites.sh`; falta a revisão de Luiza).
 - [ ] Reproduzir a configuração e fazer **ensaio da demonstração**; cada um deve conseguir explicar todos os serviços.
-- [ ] Preparar o **ZIP** com scripts, templates, documentação e evidências, sem credenciais, `.git` ou arquivos temporários.
+- [ ] Preparar o **ZIP** com scripts, templates, documentação e evidências, sem credenciais, `.git` ou arquivos temporários (comando pronto em `entrega/checklist.md`; `.gitattributes` exclui os documentos internos).
 
 **Fase concluída quando:** outra pessoa consegue seguir a documentação para montar o ambiente compatível, e a dupla consegue comprovar os requisitos presencialmente.
 
