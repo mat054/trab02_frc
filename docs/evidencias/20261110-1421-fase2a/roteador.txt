@@ -1,0 +1,54 @@
+$ pfctl -sn
+nat on vtnet0 inet from 10.20.0.0/16 to any -> (vtnet0) round-robin
+rdr on vtnet0 inet proto tcp from any to (vtnet0) port = http -> 10.20.0.10 port 8080
+
+$ pfctl -sr
+block drop in on vtnet0 all
+pass in on vtnet0 inet proto tcp from any to 10.20.0.10 port = http-alt flags S/SA keep state
+pass in on vtnet0 inet proto tcp from any to (vtnet0) port = ssh flags S/SA keep state
+pass in on vtnet0 inet proto icmp from any to (vtnet0) icmp-type echoreq keep state
+pass in on vtnet0 inet proto udp from any port = bootps to any port = bootpc keep state
+pass in on vtnet1 all flags S/SA keep state
+pass out all flags S/SA keep state
+
+$ pfctl -si
+Status: Enabled for 0 days 00:01:24           Debug: Urgent
+
+State Table                          Total             Rate
+
+$ cat /tmp/lan.cap  (tcpdump -ni vtnet1 icmp, durante ping do cliente)
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on vtnet1, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+14:20:40.411294 IP 10.20.0.10 > 192.168.64.1: ICMP echo request, id 41487, seq 0, length 64
+14:20:40.411423 IP 192.168.64.1 > 10.20.0.10: ICMP echo reply, id 41487, seq 0, length 64
+14:20:41.440433 IP 10.20.0.10 > 192.168.64.1: ICMP echo request, id 41487, seq 1, length 64
+14:20:41.440916 IP 192.168.64.1 > 10.20.0.10: ICMP echo reply, id 41487, seq 1, length 64
+14:20:42.490459 IP 10.20.0.10 > 192.168.64.1: ICMP echo request, id 41487, seq 2, length 64
+14:20:42.490854 IP 192.168.64.1 > 10.20.0.10: ICMP echo reply, id 41487, seq 2, length 64
+6 packets captured
+63 packets received by filter
+0 packets dropped by kernel
+
+$ cat /tmp/wan.cap  (tcpdump -ni vtnet0 icmp, mesmo ping)
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on vtnet0, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+14:20:40.411312 IP 192.168.64.2 > 192.168.64.1: ICMP echo request, id 55190, seq 0, length 64
+14:20:40.411419 IP 192.168.64.1 > 192.168.64.2: ICMP echo reply, id 55190, seq 0, length 64
+14:20:41.440487 IP 192.168.64.2 > 192.168.64.1: ICMP echo request, id 55190, seq 1, length 64
+14:20:41.440895 IP 192.168.64.1 > 192.168.64.2: ICMP echo reply, id 55190, seq 1, length 64
+14:20:42.490492 IP 192.168.64.2 > 192.168.64.1: ICMP echo request, id 55190, seq 2, length 64
+14:20:42.490839 IP 192.168.64.1 > 192.168.64.2: ICMP echo reply, id 55190, seq 2, length 64
+6 packets captured
+120 packets received by filter
+0 packets dropped by kernel
+
+$ cat /tmp/dnat-lan.cap  (tcpdump -ni vtnet1 tcp port 8080, durante nc do Mac na porta 80)
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on vtnet1, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+14:21:01.227273 IP 192.168.64.1.56416 > 10.20.0.10.8080: Flags [SEW], seq 4153189723, win 65535, options [mss 1460,nop,wscale 6,nop,nop,TS val 1390060716 ecr 0,sackOK,eol], length 0
+14:21:01.228111 IP 10.20.0.10.8080 > 192.168.64.1.56416: Flags [S.E], seq 694293470, ack 4153189724, win 65535, options [mss 1460,nop,wscale 8,sackOK,TS val 2380242120 ecr 1390060716], length 0
+14:21:01.228492 IP 192.168.64.1.56416 > 10.20.0.10.8080: Flags [.], ack 1, win 2059, options [nop,nop,TS val 1390060718 ecr 2380242120], length 0
+14:21:01.229161 IP 10.20.0.10.8080 > 192.168.64.1.56416: Flags [P.], seq 1:56, ack 1, win 257, options [nop,nop,TS val 2380242120 ecr 1390060718], length 55: HTTP
+4 packets captured
+13 packets received by filter
+0 packets dropped by kernel

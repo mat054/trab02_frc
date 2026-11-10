@@ -1,0 +1,50 @@
+# Fase 2A — testes 02 (NAT), 05 (DNAT) e 03 (isolamento, parte sem rota), 10/11/2026 ~14:21
+# Roteador: vtnet0 WAN 192.168.64.2 | vtnet1 LAN 10.20.0.1 | cliente-lan 10.20.0.10
+# Host WAN de teste: o Mac (192.168.64.1)
+
+## Teste 02 — no cliente LAN (ssh -J mateus@192.168.64.2 mateus@10.20.0.10)
+$ ping -c 3 192.168.64.1
+PING 192.168.64.1 (192.168.64.1): 56 data bytes
+64 bytes from 192.168.64.1: icmp_seq=0 ttl=63 time=0.378 ms
+64 bytes from 192.168.64.1: icmp_seq=1 ttl=63 time=1.642 ms
+64 bytes from 192.168.64.1: icmp_seq=2 ttl=63 time=1.300 ms
+--- 192.168.64.1 ping statistics ---
+3 packets transmitted, 3 packets received, 0.0% packet loss
+
+$ fetch -o /dev/null https://www.freebsd.org/
+/dev/null                                               21 kB  607 kBps    00s
+
+## Teste 02 — estados de NAT no roteador (pfctl -ss | grep 10.20.0)
+all udp 192.168.64.2:62808 (10.20.0.10:28128) -> 192.168.64.1:53       MULTIPLE:SINGLE
+all udp 192.168.64.2:54336 (10.20.0.10:123) -> 200.192.232.8:123       MULTIPLE:MULTIPLE
+
+## Teste 05 — servidor no cliente LAN
+$ sh tests/tcp-server.sh 8080
+$ sockstat -4 -l | grep 8080
+mateus nc         4017  3 tcp4  *:8080                *:*
+
+## Teste 05 — no Mac (host WAN)
+$ (printf 'ola do Mac\n'; sleep 2) | nc -v -w 4 192.168.64.2 80
+Connection to 192.168.64.2 port 80 [tcp/http] succeeded!
+OK cliente-lan Tue Nov 10 14:20:53 -03 2026 porta 8080
+
+## Teste 05 — log do servidor no cliente LAN
+escutando TCP 8080 em cliente-lan — teste do outro lado com: nc <IP_WAN_DO_ROTEADOR> 80
+ola do Mac
+
+## Teste 05 — estado no roteador (pfctl -ss | grep 8080)
+all tcp 10.20.0.10:8080 (192.168.64.2:80) <- 192.168.64.1:56416       FIN_WAIT_2:FIN_WAIT_2
+all tcp 192.168.64.1:56416 -> 10.20.0.10:8080       FIN_WAIT_2:FIN_WAIT_2
+
+## Teste 03 — no Mac (host WAN), sem rota para 10.20.0.0/16
+$ nc -vz -w 3 192.168.64.2 8080
+nc: connectx to 192.168.64.2 port 8080 (tcp) failed: Operation timed out
+
+$ nc -vz -w 3 192.168.64.2 80
+Connection to 192.168.64.2 port 80 [tcp/http] succeeded!
+
+$ nc -vz -w 3 192.168.64.2 22
+Connection to 192.168.64.2 port 22 [tcp/ssh] succeeded!
+
+$ ping -c 2 -t 4 10.20.0.10
+2 packets transmitted, 0 packets received, 100.0% packet loss

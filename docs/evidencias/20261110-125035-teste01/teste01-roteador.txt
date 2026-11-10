@@ -1,0 +1,51 @@
+$ uname -a
+FreeBSD freebsd-router 15.1-RELEASE FreeBSD 15.1-RELEASE releng/15.1-n283562-96841ea08dcf GENERIC arm64
+
+$ ifconfig vtnet0
+vtnet0: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
+	options=880028<VLAN_MTU,JUMBO_MTU,LINKSTATE,HWSTATS>
+	ether 72:f7:12:be:72:47
+	inet 192.168.64.2 netmask 0xffffff00 broadcast 192.168.64.255
+	inet6 fe80::70f7:12ff:febe:7247%vtnet0 prefixlen 64 scopeid 0x1
+	inet6 fd2f:dde9:9963:b382:70f7:12ff:febe:7247 prefixlen 64 autoconf pltime 604800 vltime 2592000
+	media: Ethernet autoselect (10Gbase-T <full-duplex>)
+	status: active
+	nd6 options=23<PERFORMNUD,ACCEPT_RTADV,AUTO_LINKLOCAL>
+
+$ ifconfig vtnet1
+vtnet1: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
+	options=880028<VLAN_MTU,JUMBO_MTU,LINKSTATE,HWSTATS>
+	ether 52:54:00:4c:41:01
+	inet 10.20.0.1 netmask 0xffff0000 broadcast 10.20.255.255
+	media: Ethernet autoselect (10Gbase-T <full-duplex>)
+	status: active
+	nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+
+$ netstat -rn -f inet
+Routing tables
+
+Internet:
+Destination        Gateway            Flags         Netif Expire
+default            192.168.64.1       UGS          vtnet0
+10.20.0.0/16       link#2             U            vtnet1
+10.20.0.1          link#3             UHS             lo0
+127.0.0.1          link#3             UH              lo0
+192.168.64.0/24    link#1             U            vtnet0
+192.168.64.2       link#3             UHS             lo0
+
+$ sysctl net.inet.ip.forwarding
+net.inet.ip.forwarding: 1
+
+$ ping -c 3 192.168.64.1
+PING 192.168.64.1 (192.168.64.1): 56 data bytes
+64 bytes from 192.168.64.1: icmp_seq=0 ttl=64 time=0.256 ms
+64 bytes from 192.168.64.1: icmp_seq=1 ttl=64 time=0.482 ms
+64 bytes from 192.168.64.1: icmp_seq=2 ttl=64 time=0.518 ms
+
+--- 192.168.64.1 ping statistics ---
+3 packets transmitted, 3 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 0.256/0.419/0.518/0.116 ms
+
+$ fetch -o /dev/null https://www.freebsd.org/
+/dev/null                                               21 kB  517 kBps    01s
+

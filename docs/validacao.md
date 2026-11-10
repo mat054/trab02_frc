@@ -15,7 +15,7 @@ Roteiro completo para demonstrar os requisitos no LDS. Cada teste tem roteiro de
 |---|---|---|---|
 | 1 | Roteador com WAN em 192.168.X.0/24 e LAN /16 privada | `tests/01-connectivity.md` | `ifconfig`, `netstat -rn`, `ip.forwarding=1` |
 | 2 | NAT entre LAN e rede de acesso | `tests/02-nat.md` | `tcpdump` WAN mostra IP do roteador; `pfctl -ss` |
-| 3 | Isolamento do segmento + bloqueio de ICMP para fora | `tests/03-isolation.md` | ping WAN→LAN e LAN→fora falham; TCP continua |
+| 3 | Isolamento do segmento (WAN → LAN bloqueado) | `tests/03-isolation.md` | ping/TCP do host WAN para a LAN falham, mesmo com rota; só TCP 80 (DNAT) entra; LAN → WAN continua saindo |
 | 4 | DHCP com máscara, gateway, DNS; reserva fixa; leases em log | `tests/04-dhcp.md` | cliente recebe config; `10.20.0.10` repetido; `dnsmasq.leases` e `dnsmasq.log` |
 | 5 | DNAT WAN:80 → LAN:8080 com netcat/telnet | `tests/05-dnat.md` | `nc 192.168.X.Y 80` do host WAN recebe resposta do servidor LAN |
 | 6 | Persistência | reiniciar roteador | `status.sh` igual ao anterior; repetir 4 e 5 |

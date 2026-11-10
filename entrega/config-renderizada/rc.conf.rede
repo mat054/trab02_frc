@@ -1,0 +1,4 @@
+# Linhas de /etc/rc.conf gravadas por scripts/01-setup-network.sh
+ifconfig_vtnet0="DHCP"
+ifconfig_vtnet1="inet 10.20.0.1 netmask 255.255.0.0"
+gateway_enable="YES"
